@@ -1,22 +1,19 @@
 import numpy as np
 import numpy.linalg as ln
-import scipy as sp
 from scipy import optimize
 import numdifftools as nd
-import sympy as sp
-import pandas as pd
 
 
-# Objective function
+
 def function(x):
     return x[0]**2 - x[0]*x[1] + x[1]**2 + 9*x[0] - 6*x[1] + 20
 
 
-# Derivative
-def gradient(f, x):
-    func = lambda x: x[0]**2 - x[0]*x[1] + x[1]**2 + 9*x[0] - 6*x[1] + 20
-    grad = nd.Gradient(func)
-    return np.array(grad([x[0], x[1]]))
+
+def gradient(x):
+    grad = nd.Gradient(function)
+    dx, dy = grad([x[0], x[1]])
+    return np.array([dx, dy])
 
 
 def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
@@ -38,8 +35,7 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
 
     # initial values
     k = 0
-    current_gradient = fprime(f, x0)
-    print(current_gradient)
+    current_gradient = fprime(x0)
     N = len(x0)
     # Set the Identity matrix I.
     I = np.eye(N, dtype=int)
@@ -58,7 +54,7 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
         # line_search returns not only alpha
         # but only this value is interesting for us
 
-        line_search = optimize.line_search(f, gradient(f, xk), xk, pk)
+        line_search = optimize.line_search(function, gradient, xk, pk)
         alpha_k = line_search[0]
 
         xkp1 = xk + alpha_k * pk
@@ -71,11 +67,13 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
 
         k += 1
 
-        ro = 1.0 / (np.dot(yk, sk))
-        A1 = I - ro * sk[:, np.newaxis] * yk[np.newaxis, :]
-        A2 = I - ro * yk[:, np.newaxis] * sk[np.newaxis, :]
-        Hk = np.dot(A1, np.dot(Hk, A2)) + (ro * sk[:, np.newaxis] *
-                                                 sk[np.newaxis, :])
+        print(yk)
+        print(sk[:, np.newaxis])
+
+        temp = 1 / np.dot(yk[np.newaxis, :], sk[:, np.newaxis])
+        print(temp)
+        A = Hk + ((np.dot(sk - np.dot(Hk, yk), sk)) * temp)
+        Hk = A
 
     return (xk, k)
 
