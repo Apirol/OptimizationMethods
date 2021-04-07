@@ -1,12 +1,12 @@
 import numpy as np
 import numpy.linalg as ln
 from scipy import optimize
-from method import fibonacci
+from method import fibonacci,search_minimal_segment
 import numdifftools as nd
 
 
-def function_alpha(alpha, x):
-    return function(x + alpha*(gradient(x)))
+def function_alpha(alpha, xk):
+    return function(xk - alpha*(gradient([1, 1])))
 
 
 def fast_gradient_method(f, fprime, x0, maxiter=None, epsi=10e-3):
@@ -14,8 +14,9 @@ def fast_gradient_method(f, fprime, x0, maxiter=None, epsi=10e-3):
     current_gradient = fprime(x0)
     alpha = 0.005
     while ln.norm(current_gradient) > epsi:
-        alpha = fibonacci(xk[0] + alpha * current_gradient, xk[1] + alpha * current_gradient, epsi, function_alpha)
-        xNext = xk - alpha * current_gradient
+        a, b = search_minimal_segment(0, epsi, function_alpha, xk)
+        alpha = fibonacci(a, b, epsi, function_alpha, xk)
+        xNext = xk + alpha * current_gradient
         xk = xNext
         current_gradient = gradient(xk)
     print('Искомое x = ' + str(xk))
