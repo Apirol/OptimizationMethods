@@ -1,7 +1,24 @@
 import numpy as np
 import numpy.linalg as ln
 from scipy import optimize
+from method import fibonacci
 import numdifftools as nd
+
+
+def function_alpha(alpha, x):
+    return function(x + alpha*(gradient(x)))
+
+
+def fast_gradient_method(f, fprime, x0, maxiter=None, epsi=10e-3):
+    xk = x0
+    current_gradient = fprime(x0)
+    alpha = 0.005
+    while ln.norm(current_gradient) > epsi:
+        alpha = fibonacci(xk[0] + alpha * current_gradient, xk[1] + alpha * current_gradient, epsi, function_alpha)
+        xNext = xk - alpha * current_gradient
+        xk = xNext
+        current_gradient = gradient(xk)
+    print('Искомое x = ' + str(xk))
 
 
 
@@ -78,6 +95,7 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
     return (xk, k)
 
 
+fast_gradient_method(function, gradient, np.array([1, 1]))
 result, k = bfgs_method(function, gradient, np.array([1, 1]))
 
 print('Result of BFGS method:')
