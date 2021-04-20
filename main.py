@@ -39,19 +39,6 @@ def gradient(x):
 
 
 def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
-    """
-    Minimize a function func using the BFGS algorithm.
-
-    Parameters
-    ----------
-    func : f(x)
-        Function to minimise.
-    x0 : ndarray
-        Initial guess.
-    fprime : fprime(x)
-        The gradient of `func`.
-    """
-
     if maxiter is None:
         maxiter = len(x0) * 200
 
