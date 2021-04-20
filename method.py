@@ -81,6 +81,11 @@ def search_minimal_segment(x0, eps, function, xk):
     next_x: float = 0
     first_f: float = function(first_x, xk)
 
+    if first_f == function(first_x + eps, xk):
+        return first_x, first_x + eps
+    elif first_f == function(first_x - eps, xk):
+        return first_x - eps, first_x
+
     if first_f > function(first_x + eps, xk):
         current_x = first_x + eps
         h = eps

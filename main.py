@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.linalg as ln
-from scipy import optimize
 from method import fibonacci,search_minimal_segment, search_minimal_segment2, fibonacci2
 import numdifftools as nd
 
@@ -19,16 +18,17 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
     alpha = 0.005
     while ln.norm(current_gradient) > epsi:
         a, b = search_minimal_segment(alpha, epsi, function_alpha, xk)
-        alpha = fibonacci(a, 0, epsi, function_alpha, xk)
+        alpha = fibonacci(a, b, epsi, function_alpha, xk)
         xNext = xk + alpha * current_gradient
         xk = xNext
         current_gradient = gradient(xk)
-    print('Искомое x = ' + str(xk))
+    return xk
 
 
 
 def function(x):
-    return x[0]**2 - x[0]*x[1] + x[1]**2 + 9*x[0] - 6*x[1] + 20
+    return 3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) + 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
+    #return x[0]**2 - x[0]*x[1] + x[1]**2 + 9*x[0] - 6*x[1] + 20
 
 
 
@@ -77,14 +77,9 @@ def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         gfkp1 = fprime(xkp1)
         yk = gfkp1 - current_gradient
         current_gradient = gfkp1
-
         k += 1
 
-        print(yk)
-        print(sk[:, np.newaxis])
-
         temp = 1 / np.dot(yk[np.newaxis, :], sk)
-        print(temp)
         A = Hk + ((np.dot(sk - np.dot(Hk, yk), sk[:np.newaxis])) * temp)
         Hk = A
 
@@ -117,22 +112,18 @@ def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         gfkp1 = fprime(xkp1)
         yk = gfkp1 - current_gradient
         current_gradient = gfkp1
-
         k += 1
 
-        print(yk)
-        print(sk[:, np.newaxis])
-
-        temp = 1 / np.dot(yk[np.newaxis, :], sk)
-        print(temp)
-        A = Hk + ((np.dot(sk - np.dot(Hk, yk), sk[:np.newaxis])) * temp)
+        temp = 1 / np.dot(np.dot(yk[np.newaxis, :], Hk), yk)
+        A = Hk + ((np.dot(sk - np.dot(Hk, yk), np.dot(yk, Hk).transpose())) * temp)
         Hk = A
 
     return (xk, k)
 
 
-fast_gradient_method(function, gradient, np.array([1, 1]))
-result, k = second_Pearson(function, gradient, np.array([1, 1]))
+xk = fast_gradient_method(function, gradient, np.array([2, 2]))
+result, k = third_Pearson(function, gradient, np.array([1, 1]))
+result1, k2 = second_Pearson(function, gradient, np.array([1, 1]))
 
 print('Result of BFGS method:')
 print('Final Result (best point): %s' % (result))
