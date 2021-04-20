@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as ln
 from scipy import optimize
-from method import fibonacci,search_minimal_segment
+from method import fibonacci,search_minimal_segment, search_minimal_segment2, fibonacci2
 import numdifftools as nd
 
 
@@ -9,8 +9,8 @@ def function_alpha(alpha, xk):
     return function(xk - alpha * (-gradient(xk)))
 
 
-def function_alpha2(alpha, Hk, xk):
-    return function(xk - alpha * Hk * (-gradient([1, 1])))
+def function_alpha2(alpha, xk, Hk):
+    return function(xk - alpha * np.dot(Hk, gradient(xk)))
 
 
 def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
@@ -19,8 +19,8 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
     alpha = 0.005
     while ln.norm(current_gradient) > epsi:
         a, b = search_minimal_segment(alpha, epsi, function_alpha, xk)
-        alpha = fibonacci(a, b, epsi, f, xk)
-        xNext = xk + alpha / ln.norm(current_gradient) * current_gradient
+        alpha = fibonacci(a, 0, epsi, function_alpha, xk)
+        xNext = xk + alpha * current_gradient
         xk = xNext
         current_gradient = gradient(xk)
     print('Искомое x = ' + str(xk))
@@ -38,7 +38,7 @@ def gradient(x):
     return np.array([dx, dy])
 
 
-def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
+def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
     """
     Minimize a function func using the BFGS algorithm.
 
@@ -66,19 +66,49 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
     alpha_k = 0.005
 
     while ln.norm(current_gradient) > epsi and k < maxiter:
-
-        # pk - direction of search
-
         pk = np.dot(Hk, current_gradient)
+        a, b = search_minimal_segment2(alpha_k, epsi, function_alpha2, xk, Hk)
+        alpha_k = fibonacci2(a, b, epsi, function_alpha2, xk, Hk)
 
-        # Line search constants for the Wolfe conditions.
-        # Repeating the line search
+        xkp1 = xk - alpha_k * pk
+        sk = xkp1 - xk
+        xk = xkp1
 
-        # line_search returns not only alpha
-        # but only this value is interesting for us
+        gfkp1 = fprime(xkp1)
+        yk = gfkp1 - current_gradient
+        current_gradient = gfkp1
 
-        a, b = search_minimal_segment(alpha_k, epsi, function_alpha, xk)
-        alpha_k = fibonacci(a, b, epsi, function_alpha, xk)
+        k += 1
+
+        print(yk)
+        print(sk[:, np.newaxis])
+
+        temp = 1 / np.dot(yk[np.newaxis, :], sk)
+        print(temp)
+        A = Hk + ((np.dot(sk - np.dot(Hk, yk), sk[:np.newaxis])) * temp)
+        Hk = A
+
+    return (xk, k)
+
+
+def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
+    if maxiter is None:
+        maxiter = len(x0) * 200
+
+    # initial values
+    k = 0
+    current_gradient = fprime(x0)
+    N = len(x0)
+    # Set the Identity matrix I.
+    I = np.eye(N, dtype=int)
+    Hk = I
+    xk = x0
+    alpha_k = 0.005
+
+    while ln.norm(current_gradient) > epsi and k < maxiter:
+        pk = np.dot(Hk, current_gradient)
+        a, b = search_minimal_segment2(alpha_k, epsi, function_alpha2, xk, Hk)
+        alpha_k = fibonacci2(a, b, epsi, function_alpha2, xk, Hk)
 
         xkp1 = xk - alpha_k * pk
         sk = xkp1 - xk
@@ -102,7 +132,7 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
 
 
 fast_gradient_method(function, gradient, np.array([1, 1]))
-result, k = bfgs_method(function, gradient, np.array([1, 1]))
+result, k = second_Pearson(function, gradient, np.array([1, 1]))
 
 print('Result of BFGS method:')
 print('Final Result (best point): %s' % (result))
