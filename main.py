@@ -6,7 +6,11 @@ import numdifftools as nd
 
 
 def function_alpha(alpha, xk):
-    return function(xk - alpha*(-gradient([1, 1])))
+    return function(xk - alpha * (-gradient(xk)))
+
+
+def function_alpha2(alpha, Hk, xk):
+    return function(xk - alpha * Hk * (-gradient([1, 1])))
 
 
 def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
@@ -15,7 +19,7 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
     alpha = 0.005
     while ln.norm(current_gradient) > epsi:
         a, b = search_minimal_segment(alpha, epsi, function_alpha, xk)
-        alpha = fibonacci(a, 0, epsi, function_alpha, xk)
+        alpha = fibonacci(a, b, epsi, f, xk)
         xNext = xk + alpha / ln.norm(current_gradient) * current_gradient
         xk = xNext
         current_gradient = gradient(xk)
@@ -59,12 +63,13 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
     I = np.eye(N, dtype=int)
     Hk = I
     xk = x0
+    alpha_k = 0.005
 
     while ln.norm(current_gradient) > epsi and k < maxiter:
 
         # pk - direction of search
 
-        pk = -np.dot(Hk, current_gradient)
+        pk = np.dot(Hk, current_gradient)
 
         # Line search constants for the Wolfe conditions.
         # Repeating the line search
@@ -72,10 +77,10 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
         # line_search returns not only alpha
         # but only this value is interesting for us
 
-        line_search = optimize.line_search(function, gradient, xk, pk)
-        alpha_k = line_search[0]
+        a, b = search_minimal_segment(alpha_k, epsi, function_alpha, xk)
+        alpha_k = fibonacci(a, b, epsi, function_alpha, xk)
 
-        xkp1 = xk + alpha_k * pk
+        xkp1 = xk - alpha_k * pk
         sk = xkp1 - xk
         xk = xkp1
 
@@ -88,9 +93,9 @@ def bfgs_method(f, fprime, x0, maxiter=None, epsi=10e-3):
         print(yk)
         print(sk[:, np.newaxis])
 
-        temp = 1 / np.dot(yk[np.newaxis, :], sk[:, np.newaxis])
+        temp = 1 / np.dot(yk[np.newaxis, :], sk)
         print(temp)
-        A = Hk + ((np.dot(sk - np.dot(Hk, yk), sk)) * temp)
+        A = Hk + ((np.dot(sk - np.dot(Hk, yk), sk[:np.newaxis])) * temp)
         Hk = A
 
     return (xk, k)

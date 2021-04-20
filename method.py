@@ -15,7 +15,6 @@ def fibonacci(a, b, eps, function, xk):
         n += 1
 
     n -= 3
-    print("Число n = " + str(n))
     x1 = a + FIBONACCI[n] / FIBONACCI[n + 2] * (b - a)
     x2 = a + b - x1
     f1 = function(x1, xk)
