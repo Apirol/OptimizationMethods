@@ -6,17 +6,17 @@ import numdifftools as nd
 
 
 def function_alpha(alpha, xk):
-    return function(xk - alpha*(gradient([1, 1])))
+    return function(xk - alpha*(-gradient([1, 1])))
 
 
-def fast_gradient_method(f, fprime, x0, maxiter=None, epsi=10e-3):
+def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
     xk = x0
     current_gradient = fprime(x0)
     alpha = 0.005
     while ln.norm(current_gradient) > epsi:
-        a, b = search_minimal_segment(0, epsi, function_alpha, xk)
-        alpha = fibonacci(a, b, epsi, function_alpha, xk)
-        xNext = xk + alpha * current_gradient
+        a, b = search_minimal_segment(alpha, epsi, function_alpha, xk)
+        alpha = fibonacci(a, 0, epsi, function_alpha, xk)
+        xNext = xk + alpha / ln.norm(current_gradient) * current_gradient
         xk = xNext
         current_gradient = gradient(xk)
     print('Искомое x = ' + str(xk))
