@@ -2,6 +2,7 @@ import numpy as np
 import numpy.linalg as ln
 from method import fibonacci,search_minimal_segment, search_minimal_segment2, fibonacci2
 import numdifftools as nd
+import pandas
 
 
 def function_alpha(alpha, xk):
@@ -27,7 +28,9 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
 
 
 def function(x):
-    return 3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) + 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
+    return x[0]**3 + 3 * x[0] * x[1]**2 - 15 * x[0] - 12 * x[1]
+    #return x[0]**3 + 2 * x[1]**2 - 3 * x[0] - 4 * x[1]
+    #return -3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) - 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
     #return x[0]**2 - x[0]*x[1] + x[1]**2 + 9*x[0] - 6*x[1] + 20
 
 
@@ -42,11 +45,10 @@ def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
     if maxiter is None:
         maxiter = len(x0) * 200
 
-    # initial values
     k = 0
     current_gradient = fprime(x0)
     N = len(x0)
-    # Set the Identity matrix I.
+
     I = np.eye(N, dtype=int)
     Hk = I
     xk = x0
@@ -77,11 +79,10 @@ def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
     if maxiter is None:
         maxiter = len(x0) * 200
 
-    # initial values
     k = 0
     current_gradient = fprime(x0)
     N = len(x0)
-    # Set the Identity matrix I.
+
     I = np.eye(N, dtype=int)
     Hk = I
     xk = x0
@@ -108,7 +109,7 @@ def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
     return (xk, k)
 
 
-xk = fast_gradient_method(function, gradient, np.array([2, 2]))
+xk = fast_gradient_method(function, gradient, np.array([1, 1]))
 result, k = third_Pearson(function, gradient, np.array([1, 1]))
 result1, k2 = second_Pearson(function, gradient, np.array([1, 1]))
 
