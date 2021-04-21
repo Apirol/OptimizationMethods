@@ -3,6 +3,7 @@ import numpy.linalg as ln
 from method import fibonacci,search_minimal_segment, search_minimal_segment2, fibonacci2
 import numdifftools as nd
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 
@@ -17,6 +18,18 @@ def function_alpha2(alpha, xk, Hk):
 def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
     df = pd.DataFrame()
 
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 12
+    fig_size[1] = 12
+    plt.rcParams["figure.figsize"] = fig_size
+
+    X = np.arange(-5, 5, 0.10)
+    Y = np.arange(-5, 5, 0.10)
+    X, Y = np.meshgrid(X, Y)
+    plt.contour(X,Y,f([X, Y]), 140)
+
+    plt.plot(x0[0], x0[1], 'ro')
+
     iter_counter: int = 0
     xk = x0
     current_gradient = fprime(x0)
@@ -25,12 +38,17 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=10e-3):
         a, b = search_minimal_segment(alpha, epsi, function_alpha, xk)
         alpha = fibonacci(a, b, epsi, function_alpha, xk)
         xNext = xk + alpha * current_gradient
+
         current_iter = [{'X': xk[0], 'Y': xk[1], 'F': f(xk), 'Lambda': alpha, 'DX': xNext[0] - xk[0],
                          'DY': xNext[1] - xk[1], 'DF': f(xNext) - f(xk), 'Gradient': current_gradient}]
         df = df.append(current_iter, ignore_index=True)
+
+        plt.plot([xk[0], xNext[0]], [xk[1], xNext[1]], '-r')
+
         xk = xNext
         current_gradient = gradient(xk)
         iter_counter += 1
+    plt.show()
     df.to_excel('Report.xlsx')
     return xk
 
@@ -53,6 +71,18 @@ def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
 
     df = pd.DataFrame()
 
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 12
+    fig_size[1] = 12
+    plt.rcParams["figure.figsize"] = fig_size
+
+    X = np.arange(-5, 5, 0.10)
+    Y = np.arange(-5, 5, 0.10)
+    X, Y = np.meshgrid(X, Y)
+    plt.contour(X, Y, f([X, Y]), 140)
+
+    plt.plot(x0[0], x0[1], 'ro')
+
     k = 0
     current_gradient = fprime(x0)
     N = len(x0)
@@ -72,6 +102,7 @@ def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         current_iter = [{'X': xk[0], 'Y': xk[1], 'F': f(xk), 'Lambda': alpha_k, 'DX': xkp1[0] - xk[0],
                          'DY': xkp1[1] - xk[1], 'DF': f(xkp1) - f(xk), 'Gradient': current_gradient, 'Hk': Hk}]
         df = df.append(current_iter, ignore_index=True)
+        plt.plot([xk[0], xkp1[0]], [xk[1], xkp1[1]], '-r')
 
         sk = xkp1 - xk
         xk = xkp1
@@ -85,6 +116,7 @@ def second_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         Hk = Hk + ((np.dot(sk - np.dot(Hk, yk), sk[:np.newaxis])) * temp)
 
     df.to_excel("Report_Second_Pearson.xlsx")
+    plt.show()
     return (xk, k)
 
 
@@ -93,6 +125,18 @@ def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         maxiter = len(x0) * 200
 
     df = pd.DataFrame()
+
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 12
+    fig_size[1] = 12
+    plt.rcParams["figure.figsize"] = fig_size
+
+    X = np.arange(-5, 5, 0.10)
+    Y = np.arange(-5, 5, 0.10)
+    X, Y = np.meshgrid(X, Y)
+    plt.contour(X, Y, f([X, Y]), 140)
+
+    plt.plot(x0[0], x0[1], 'ro')
 
     k = 0
     current_gradient = fprime(x0)
@@ -113,6 +157,8 @@ def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         current_iter = [{'X': xk[0], 'Y': xk[1], 'F': f(xk), 'Lambda': alpha_k, 'DX': xkp1[0] - xk[0],
                          'DY': xkp1[1] - xk[1], 'DF': f(xkp1) - f(xk), 'Gradient': current_gradient, 'Hk': Hk}]
         df = df.append(current_iter, ignore_index=True)
+
+        plt.plot([xk[0], xkp1[0]], [xk[1], xkp1[1]], '-r')
 
         sk = xkp1 - xk
         xk = xkp1
@@ -127,6 +173,7 @@ def third_Pearson(f, fprime, x0, maxiter=None, epsi=10e-3):
         Hk = A
 
     df.to_excel("Report_Third_Pearson.xlsx")
+    plt.show()
     return (xk, k)
 
 
