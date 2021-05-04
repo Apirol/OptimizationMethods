@@ -15,7 +15,7 @@ def Rosenbrock_gradient(X):
     return np.array([2 * (x - 1) - 4 * 100 * x * (y - x**2), 2 * 100 * (y - x**2)])
 
 
-def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-4):
+def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-8):
     df = pd.DataFrame()
 
     fig_size = plt.rcParams["figure.figsize"]
@@ -54,18 +54,21 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-4):
         if np.linalg.norm(current_gradient) < epsi:
             plt.show()
             df.to_excel('Report.xlsx')
-            return xk
+            return xk, iter_counter
 
     plt.show()
     df.to_excel('Report.xlsx')
-    return xk
+    return xk, iter_counter
+
 
 
 
 def function(X):
     #return x[0]**2 + x[1]**2
     x, y = X
-    return (1 - x) ** 2 + 100 * (y - x) ** 2
+    #return 10 * x**2 + y**2
+    return x**2-x*y+y**2+9*x-6*y+20
+    #return (1 - x) ** 2 + 100 * (y - x) ** 2
     #return -3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) - 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
 
 
@@ -134,7 +137,7 @@ def second_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
     return xk, k
 
 
-def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
+def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-7):
     df = pd.DataFrame()
 
     fig_size = plt.rcParams["figure.figsize"]
@@ -191,7 +194,7 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
     return xk, k
 
 
-xk = fast_gradient_method(function, gradient, np.array([0, 0]))
-result, k = third_Pearson(function, gradient, np.array([0, 0]))
-result1, k2 = second_Pearson(function, gradient, np.array([0, 0]))
+xk, counter = fast_gradient_method(function, gradient, np.array([10, 10]))
+result, k = third_Pearson(function, gradient, np.array([10, 10]))
+result1, k2 = second_Pearson(function, gradient, np.array([10, 10]))
 print("Stop")
