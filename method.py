@@ -1,76 +1,60 @@
-import numpy as np
+from math import sqrt
 
 
-def read_massive(filename):
-    return np.loadtxt(filename, dtype=np.int)
+def golden_ratio(function, a, b, eps):
+    SQRT5 = sqrt(5)
 
+    x1 = a + (3 - SQRT5) / 2 * (b - a)
+    x2 = a + (SQRT5 - 1) / 2 * (b - a)
 
-def fibonacci(a, b, eps, function, xk):
-    FIBONACCI = read_massive("fibonacci_numbers.txt")
-    n: int = 0
-    number_of_calc = 0
-    current_length = b - a
-
-    while FIBONACCI[n] < current_length / eps:
-        n += 1
-
-    n -= 3
-    x1 = a + FIBONACCI[n] / FIBONACCI[n + 2] * (b - a)
-    x2 = a + b - x1
-    f1 = function(x1, xk)
-    f2 = function(x2, xk)
+    f1 = function(x1)
+    f2 = function(x2)
     i: int = 0
 
-    while number_of_calc <= n:
-        number_of_calc += 1
+    while abs(a - b) > eps:
         if f1 < f2:
             b = x2
             x2 = x1
-            x1 = a + FIBONACCI[n - number_of_calc + 1] / FIBONACCI[n - number_of_calc + 3] * (b - a)
+            x1 = a + (3 - SQRT5) / 2 * (b - a)
             f2 = f1
-            f1 = function(x1, xk)
+            f1 = function(x1)
         else:
             a = x1
             x1 = x2
-            x2 = a + FIBONACCI[n - number_of_calc + 2] / FIBONACCI[n - number_of_calc + 3] * (b - a)
+            x2 = a + (SQRT5 - 1) / 2 * (b - a)
             f1 = f2
-            f2 = function(x2, xk)
+            f2 = function(x2)
+
         i += 1
-    return a
+    return (a + b) / 2
 
 
-def fibonacci2(a, b, eps, function, xk, Hk):
-    FIBONACCI = read_massive("fibonacci_numbers.txt")
-    n: int = 0
-    number_of_calc = 0
-    current_length = b - a
+def golden_ratio_2(function, a, b, eps):
+    SQRT5 = sqrt(5)
 
-    while FIBONACCI[n] < current_length / eps:
-        n += 1
+    x1 = a + (3 - SQRT5) / 2 * (b - a)
+    x2 = a + (SQRT5 - 1) / 2 * (b - a)
 
-    n -= 3
-    x1 = a + FIBONACCI[n] / FIBONACCI[n + 2] * (b - a)
-    x2 = a + b - x1
-    f1 = function(x1, xk, Hk)
-    f2 = function(x2, xk, Hk)
+    f1 = function(x1)
+    f2 = function(x2)
     i: int = 0
 
-    while number_of_calc <= n:
-        number_of_calc += 1
+    while abs(a - b) > eps:
         if f1 < f2:
             b = x2
             x2 = x1
-            x1 = a + FIBONACCI[n - number_of_calc + 1] / FIBONACCI[n - number_of_calc + 3] * (b - a)
+            x1 = a + (3 - SQRT5) / 2 * (b - a)
             f2 = f1
-            f1 = function(x1, xk, Hk)
+            f1 = function(x1)
         else:
             a = x1
             x1 = x2
-            x2 = a + FIBONACCI[n - number_of_calc + 2] / FIBONACCI[n - number_of_calc + 3] * (b - a)
+            x2 = a + (SQRT5 - 1) / 2 * (b - a)
             f1 = f2
-            f2 = function(x2, xk, Hk)
+            f2 = function(x2)
+
         i += 1
-    return a
+    return (a + b) / 2
 
 
 def search_minimal_segment(x0, eps, function, xk):
@@ -81,17 +65,14 @@ def search_minimal_segment(x0, eps, function, xk):
     next_x: float = 0
     first_f: float = function(first_x, xk)
 
-    if first_f - function(first_x + eps, xk) > eps:
-        return first_x, first_x + eps
-    elif first_f == function(first_x - eps, xk):
-        return first_x - eps, first_x
-
     if first_f > function(first_x + eps, xk):
         current_x = first_x + eps
         h = eps
     elif first_f > function(first_x - eps, xk):
         current_x = first_x - eps
         h = - eps
+    else:
+        return first_x + eps, first_x - eps
 
     h = 2 * h
     current_f = function(current_x, xk)
@@ -124,6 +105,8 @@ def search_minimal_segment2(x0, eps, function, xk, Hk):
     elif first_f > function(first_x - eps, xk, Hk):
         current_x = first_x - eps
         h = - eps
+    else:
+        return first_x + eps, first_x - eps
 
     h = 2 * h
     current_f = function(current_x, xk, Hk)
