@@ -56,13 +56,15 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
 
 
 
-def function(x):
+def function(X):
     #return x[0]**2 + x[1]**2
-    #x, y = X
+    x, y = X
+    return x**2 - x*y + y**2 + 9*x - 6*y + 20
     #return 10 * x**2 + y**2
     #return x**2-x*y+y**2+9*x-6*y+20
+    #return x**2 + y**2 - 1.2 * x * y
     #return (1 - x) ** 2 + 100 * (y - x**2) ** 2
-    return -3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) - 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
+    #return -3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) - 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
 
 
 def gradient(x):
@@ -162,7 +164,7 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
     while k < maxiter:
         pk = np.dot(Hk, current_gradient)
         q = lambda alpha: f(xk - alpha * pk)
-        alpha_k, iter_func = golden_ratio(q, 0, 10, epsi)
+        alpha_k, iter_func = golden_ratio(q, 0, 1, epsi)
         iter_counter_func += iter_func
         xkp1 = xk - alpha_k * pk
 
@@ -182,7 +184,7 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
 
         temp = 1 / np.dot(np.dot(yk[np.newaxis, :], Hk), yk)
 
-        if k % 22 == 0:
+        if k % 5 == 0:
             Hk = np.eye(N, dtype=int)
         else:
             Hk = Hk + ((np.dot(sk - np.dot(Hk, yk), np.dot(yk, Hk).transpose())) * temp)
@@ -197,7 +199,7 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
     return xk, k, iter_counter_func
 
 
-xk, counter, iter_counter = fast_gradient_method(function, gradient, np.array([0, 0]), epsi=1e-5)
-result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([0, 0]), epsi=1e-5)
-result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([0, 0]), epsi=1e-5)
+#xk, counter, iter_counter = fast_gradient_method(function, gradient, np.array([10, 10]), epsi=1e-5)
+result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([1, 1]), epsi=1e-3)
+result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([10, 10]), epsi=1e-5)
 print("Stop")
