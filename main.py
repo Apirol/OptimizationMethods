@@ -4,6 +4,7 @@ from method import golden_ratio, search_minimal_segment
 import numdifftools as nd
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize, rosen
 
 
 def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
@@ -30,7 +31,7 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
 
     while iter_counter < maxiter:
         q = lambda alpha: f(xk - alpha * current_gradient)
-        coeff, iter_func = golden_ratio(q, 0, 10, epsi)
+        coeff, iter_func = golden_ratio(q, -100, 100, epsi)
         iter_counter_func += iter_func
         xNext = xk - coeff * current_gradient
 
@@ -45,23 +46,22 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
         iter_counter += 1
 
         if np.linalg.norm(current_gradient) <= epsi:
-            plt.show()
-            df.to_excel('Report.xlsx')
-            return xk, iter_counter, iter_counter_func
-
-    plt.show()
-    df.to_excel('Report.xlsx')
-    return xk, iter_counter, iter_counter_func
+            return xk
 
 
+def g(X):
+    x, y = X
+    return x + y - 1
 
 
 def function(X):
     #return x[0]**2 + x[1]**2
     x, y = X
-    return x**2 - x*y + y**2 + 9*x - 6*y + 20
+    return x**2 + y**2
+    #return 5 * (x + y)**2 + (x - 2)**2
+    #return 10 * (y - x)**2 + y**2
+    #return x**2 - x*y + y**2 + 9*x - 6*y + 20
     #return 10 * x**2 + y**2
-    #return x**2-x*y+y**2+9*x-6*y+20
     #return x**2 + y**2 - 1.2 * x * y
     #return (1 - x) ** 2 + 100 * (y - x**2) ** 2
     #return -3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) - 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
@@ -71,6 +71,57 @@ def gradient(x):
     grad = nd.Gradient(function)
     dx, dy = grad([x[0], x[1]])
     return np.array([dx, dy])
+
+
+
+
+def penalty_function(g):
+    return 0.5 * (g + abs(g))
+
+
+def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=10000):
+    df = pd.DataFrame()
+
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 12
+    fig_size[1] = 12
+    plt.rcParams["figure.figsize"] = fig_size
+
+    X = np.arange(-20, 20, 0.5)
+    Y = np.arange(-20, 20, 0.5)
+    X, Y = np.meshgrid(X, Y)
+    plt.contour(X, Y, f([X, Y]))
+
+    plt.plot(x_0[0], x_0[1], 'ro')
+
+    k = 0
+    betta = 10
+    w = 1
+    r = 2
+    xk = x_0
+    P = 0
+    next_P = P
+    current_f = f
+
+
+    while k < maxiter:
+        if current_f(xk) < eps:
+            return xk, k
+
+        gk = g(xk)**2
+        if g(xk)**2 <= 0:
+            current_f = f
+        else:
+            current_f = lambda x: f(x) + r * g(xk)**2
+
+        current_value = current_f(xk)
+
+        xNext = minimize(current_f, xk).x
+
+        xk = xNext
+        k = k + 1
+        r *= betta
+
 
 
 def second_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
@@ -97,6 +148,7 @@ def second_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
     xk = x0
     alpha_k = 0.005
     iter_counter_func = 0
+
 
     while k < maxiter:
         pk = np.dot(Hk, current_gradient)
@@ -184,15 +236,13 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
 
         temp = 1 / np.dot(np.dot(yk[np.newaxis, :], Hk), yk)
 
-        if k % 5 == 0:
+        if k % 22 == 0:
             Hk = np.eye(N, dtype=int)
         else:
             Hk = Hk + ((np.dot(sk - np.dot(Hk, yk), np.dot(yk, Hk).transpose())) * temp)
 
         if ln.norm(current_gradient) < epsi:
-            df.to_excel("Report_Third_Pearson.xlsx")
-            plt.show()
-            return xk, k, iter_counter_func
+            return xk
 
     df.to_excel("Report_Third_Pearson.xlsx")
     plt.show()
@@ -200,6 +250,7 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
 
 
 #xk, counter, iter_counter = fast_gradient_method(function, gradient, np.array([10, 10]), epsi=1e-5)
-result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([1, 1]), epsi=1e-3)
-result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([10, 10]), epsi=1e-5)
+#result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([10, 10]), epsi=1e-3)
+#result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([10, 10]), epsi=1e-5)
+xk, iter_counter = penalty_method(function, gradient, penalty_function, g, np.array([-7, 5]), eps=1e-5)
 print("Stop")
