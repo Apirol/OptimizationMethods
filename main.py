@@ -5,6 +5,7 @@ import numdifftools as nd
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, rosen
+from scipy.optimize import LinearConstraint
 
 
 def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
@@ -51,15 +52,22 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
 
 def g(X):
     x, y = X
+    #return (x-7)**2 + (y - 7)**2 - 18
     return x + y - 1
+
+
+def h(X):
+    x, y = X
+    return x - y
 
 
 def function(X):
     #return x[0]**2 + x[1]**2
     x, y = X
-    return x**2 + y**2
+    #return x**2 + y**2
+    #return -x**2 - y**2
     #return 5 * (x + y)**2 + (x - 2)**2
-    #return 10 * (y - x)**2 + y**2
+    return 10 * (y - x)**2 + y**2
     #return x**2 - x*y + y**2 + 9*x - 6*y + 20
     #return 10 * x**2 + y**2
     #return x**2 + y**2 - 1.2 * x * y
@@ -76,7 +84,7 @@ def gradient(x):
 
 
 def penalty_function(g):
-    return 0.5 * (g + abs(g))
+    return 0.5 * (g + abs(g))**2
 
 
 def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=10000):
@@ -97,30 +105,32 @@ def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=1000
     k = 0
     betta = 10
     w = 1
-    r = 2
+    r = 100000
     xk = x_0
     P = 0
     next_P = P
-    current_f = f
+    current_f = f(xk)
 
+    linear_constraint = {LinearConstraint([[1, 1]], [-np.inf, 1], [1])}
+
+    cons = ({'type': 'ineq', 'fun': g})
 
     while k < maxiter:
-        if current_f(xk) < eps:
+        pen = max(0, r * g(xk)**2 * w)
+
+
+        current_f = lambda x, a: f(x) + max(0, a * g(x)**2 * w)
+        current_value = current_f(xk, r)
+        xNext = minimize(current_f, xk, r).x
+
+        q = r * g(xNext) ** 2 * w
+        if r * g(xk) ** 2 * w < eps:
             return xk, k
 
-        gk = g(xk)**2
-        if g(xk)**2 <= 0:
-            current_f = f
-        else:
-            current_f = lambda x: f(x) + r * g(xk)**2
 
-        current_value = current_f(xk)
-
-        xNext = minimize(current_f, xk).x
-
+        w += 1
         xk = xNext
-        k = k + 1
-        r *= betta
+        k += 1
 
 
 
@@ -252,5 +262,5 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
 #xk, counter, iter_counter = fast_gradient_method(function, gradient, np.array([10, 10]), epsi=1e-5)
 #result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([10, 10]), epsi=1e-3)
 #result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([10, 10]), epsi=1e-5)
-xk, iter_counter = penalty_method(function, gradient, penalty_function, g, np.array([-7, 5]), eps=1e-5)
+xk, iter_counter = penalty_method(function, gradient, penalty_function, g, np.array([10, 10]), eps=1e-5)
 print("Stop")
