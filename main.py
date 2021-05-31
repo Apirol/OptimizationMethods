@@ -5,7 +5,7 @@ import numdifftools as nd
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, rosen
-from scipy.optimize import LinearConstraint
+import math
 
 
 def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
@@ -50,24 +50,14 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
             return xk
 
 
-def g(X):
-    x, y = X
-    #return (x-7)**2 + (y - 7)**2 - 18
-    return x + y - 1
-
-
-def h(X):
-    x, y = X
-    return x - y
-
-
 def function(X):
     #return x[0]**2 + x[1]**2
     x, y = X
     #return x**2 + y**2
     #return -x**2 - y**2
-    #return 5 * (x + y)**2 + (x - 2)**2
-    return 10 * (y - x)**2 + y**2
+    return 5 * (x + y)**2 + (x - 2)**2
+    #return (x - 4)**2 + (y - 4)**2
+    #return 10 * (y - x)**2 + y**2
     #return x**2 - x*y + y**2 + 9*x - 6*y + 20
     #return 10 * x**2 + y**2
     #return x**2 + y**2 - 1.2 * x * y
@@ -81,10 +71,22 @@ def gradient(x):
     return np.array([dx, dy])
 
 
+def g(X):
+    x, y = X
+    return -x - y + 1
+
+
+def h(X):
+    x, y = X
+    return -x - y + 1
 
 
 def penalty_function(g):
-    return 0.5 * (g + abs(g))**2
+    return 0.5 * (g + abs(g))
+
+
+def barrier_function(g):
+   return -1. / g
 
 
 def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=10000):
@@ -102,36 +104,57 @@ def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=1000
 
     plt.plot(x_0[0], x_0[1], 'ro')
 
-    k = 0
-    betta = 10
-    w = 1
-    r = 100000
+    iter_counter = 0
+    w = 10
+    r = 100
     xk = x_0
-    P = 0
-    next_P = P
-    current_f = f(xk)
 
-    linear_constraint = {LinearConstraint([[1, 1]], [-np.inf, 1], [1])}
-
-    cons = ({'type': 'ineq', 'fun': g})
-
-    while k < maxiter:
-        pen = max(0, r * g(xk)**2 * w)
-
-
-        current_f = lambda x, a: f(x) + max(0, a * g(x)**2 * w)
-        current_value = current_f(xk, r)
+    while iter_counter < maxiter:
+        current_f = lambda x, r: f(x) + max(0, r * penalty_function(g(x))**2 * w)
         xNext = minimize(current_f, xk, r).x
-
-        q = r * g(xNext) ** 2 * w
-        if r * g(xk) ** 2 * w < eps:
-            return xk, k
-
-
-        w += 1
         xk = xNext
-        k += 1
+        current_value = current_f(xNext, r)
 
+        q = r * penalty_function(g(xk))**2 * w
+        if q < eps:
+            return xk, iter_counter
+
+        w *= 10
+        iter_counter += 1
+
+
+def barrier_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=10000):
+    df = pd.DataFrame()
+
+    fig_size = plt.rcParams["figure.figsize"]
+    fig_size[0] = 12
+    fig_size[1] = 12
+    plt.rcParams["figure.figsize"] = fig_size
+
+    X = np.arange(-20, 20, 0.5)
+    Y = np.arange(-20, 20, 0.5)
+    X, Y = np.meshgrid(X, Y)
+    plt.contour(X, Y, f([X, Y]))
+
+    plt.plot(x_0[0], x_0[1], 'ro')
+
+    iter_counter = 0
+    w = 0.1
+    r = 1000
+    xk = x_0
+
+    while iter_counter < maxiter:
+        current_f = lambda x, r: f(x) + r * barrier_function(g(x)) * w + max(0, r * penalty_function(g(x))**2 * w) + r * h(xk) * w
+        xNext = minimize(current_f, xk, r).x
+        xk = xNext
+        current_value = current_f(xNext, r)
+
+        q = r * barrier_function(g(xk)) * w
+        if abs(q) < eps:
+            return xk, iter_counter
+
+        w /= 10
+        iter_counter += 1
 
 
 def second_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
@@ -262,5 +285,6 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
 #xk, counter, iter_counter = fast_gradient_method(function, gradient, np.array([10, 10]), epsi=1e-5)
 #result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([10, 10]), epsi=1e-3)
 #result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([10, 10]), epsi=1e-5)
-xk, iter_counter = penalty_method(function, gradient, penalty_function, g, np.array([10, 10]), eps=1e-5)
+xk, iter_counter = barrier_method(function, gradient, barrier_function, g, np.array([-10, 10]), eps=1e-5)
+xk1, iter_counter1 = penalty_method(function, gradient, penalty_function, g, np.array([-10, 10]), eps=1e-5)
 print("Stop")
