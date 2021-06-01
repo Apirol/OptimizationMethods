@@ -73,7 +73,7 @@ def gradient(x):
 
 def g(X):
     x, y = X
-    return -x - y + 1
+    return 1 - x - y
 
 
 def h(X):
@@ -86,7 +86,7 @@ def penalty_function(g):
 
 
 def barrier_function(g):
-   return -1. / g
+   return -np.log(-g)
 
 
 def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=10000):
@@ -112,6 +112,7 @@ def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=1000
     while iter_counter < maxiter:
         current_f = lambda x, r: f(x) + max(0, r * penalty_function(g(x))**2 * w)
         xNext = minimize(current_f, xk, r).x
+
         xk = xNext
         current_value = current_f(xNext, r)
 
@@ -139,21 +140,25 @@ def barrier_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=1000
     plt.plot(x_0[0], x_0[1], 'ro')
 
     iter_counter = 0
-    w = 0.1
-    r = 1000
+    w = 10
+    coeff = 1
     xk = x_0
 
     while iter_counter < maxiter:
-        current_f = lambda x, r: f(x) + r * barrier_function(g(x)) * w + max(0, r * penalty_function(g(x))**2 * w) + r * h(xk) * w
-        xNext = minimize(current_f, xk, r).x
-        xk = xNext
-        current_value = current_f(xNext, r)
+        tem = g(xk)
+        temp = coeff * barrier_function(g(xk)) * w
+        current_f = lambda x: f(x) + coeff * barrier_function(g(x)) * w
+        xNext = minimize(current_f, xk, method='Nelder-Mead').x
 
-        q = r * barrier_function(g(xk)) * w
+        #if g(xNext) != 0:
+        xk = xNext
+        current_value = current_f(xNext)
+
+        q = coeff * barrier_function(g(xk)) * w
         if abs(q) < eps:
             return xk, iter_counter
 
-        w /= 10
+        w *= 0.1
         iter_counter += 1
 
 
@@ -285,6 +290,6 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
 #xk, counter, iter_counter = fast_gradient_method(function, gradient, np.array([10, 10]), epsi=1e-5)
 #result, k, third_Pearson_iter = third_Pearson(function, gradient, np.array([10, 10]), epsi=1e-3)
 #result1, k2, second_Pearson_iter = second_Pearson(function, gradient, np.array([10, 10]), epsi=1e-5)
-xk, iter_counter = barrier_method(function, gradient, barrier_function, g, np.array([-10, 10]), eps=1e-5)
-xk1, iter_counter1 = penalty_method(function, gradient, penalty_function, g, np.array([-10, 10]), eps=1e-5)
+xk, iter_counter = barrier_method(function, gradient, barrier_function, g, np.array([-0.5, 3]), eps=1e-5)
+xk1, iter_counter1 = penalty_method(function, gradient, penalty_function, g, np.array([3, 1]), eps=1e-9)
 print("Stop")
