@@ -1,4 +1,6 @@
+import random
 from math import sqrt
+import numpy as np
 
 
 def golden_ratio(function, a, b, eps):
@@ -59,3 +61,20 @@ def search_minimal_segment(function, x0, eps):
         next_f = function(next_x)
 
     return first_x, next_x
+
+
+def calculate_vector_sum(function, xk, m, g, current_value, field_x, field_y):
+    res = [0, 0]
+
+    for i in range(m):
+        eps = calculate_x(xk, field_x, field_y)
+        res += eps * (function(xk + g * eps) - current_value)
+
+    return res
+
+
+def calculate_x(X, field_x, field_y):
+    x_0, y_0 = X
+    x = random.uniform(-1, 1)
+    y = sqrt(1 - x**2)
+    return np.array([x, y])
