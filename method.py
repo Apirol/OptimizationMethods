@@ -73,8 +73,7 @@ def calculate_vector_sum(function, xk, m, g, current_value, field_x, field_y):
     return res
 
 
-def calculate_x(X, field_x, field_y):
-    x_0, y_0 = X
+def calculate_x():
     x = random.uniform(-1, 1)
     y = sqrt(1 - x**2)
     return np.array([x, y])

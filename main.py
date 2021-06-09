@@ -1,3 +1,4 @@
+import math
 import random
 
 import numpy as np
@@ -35,8 +36,8 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
 
     while iter_counter < maxiter:
         q = lambda alpha: f(xk - alpha * current_gradient)
-        coeff, iter_func = golden_ratio(q, -100, 100, epsi)
-        iter_counter_func += iter_func
+        coeff = golden(q)
+        #iter_counter_func += iter_func
         xNext = xk - coeff * current_gradient
 
         current_iter = [{'X': xk[0], 'Y': xk[1], 'F': f(xk), 'Lambda': coeff, 'DX': xNext[0] - xk[0],
@@ -71,18 +72,18 @@ def function(X):
 
 def func_for_simple(X):
     x, y = X
-    a = [-6, -7, 8, -9, 9, 0]
-    b = [9, 7, -8, 3, 8, 7]
-    C = [7, 9, 10, 6, 5, 7]
-    #a = [5, 2, -9, 0, -3, -3]
-    #b = [4, 0, -6, -3, 7, 3]
-    #C = [2, 1, 7, 2, 8, 4]
+    #a = [-6, -7, 8, -9, 9, 0]
+    #b = [9, 7, -8, 3, 8, 7]
+    #C = [7, 9, 10, 6, 5, 7]
+    a = [5, 2, -9, 0, -3, -3]
+    b = [4, 0, -6, -3, 7, 3]
+    C = [2, 1, 7, 2, 8, 4]
     res = 0
 
     for i in range(6):
         res += C[i] / (1 + (x - a[i])**2 + (y - b[i])**2)
 
-    return res
+    return -res
 
 
 def gradient(x):
@@ -320,43 +321,40 @@ def third_Pearson(f, fprime, x0, maxiter=10000, epsi=1e-4):
     return xk, k, iter_counter_func
 
 
-def simple_search(function, P, eps, global_min):
-    #a = [5, 2, -9, 0, -3, -3]
-    #b = [4, 0, -6, -3, 7, 3]
-    #C = [2, 1, 7, 2, 8, 4]
-
+def simple_search(function, P, eps):
     V_x = [-10, 10]
     V_y = V_x
 
-    V = (V_x[0] - V_x[1]) * (V_y[0] - V_y[1])
+    V = (V_x[1] - V_x[0]) * (V_y[1] - V_y[0])
 
     V_eps = eps * eps
     P_eps = V_eps / V
-    N = np.log(1 - P) / np.log(1 - P_eps)
+    N = round(np.log(1 - P) / np.log(1 - P_eps))
     min_x = [0, 0]
+    global_min = float('inf')
 
     iter_counter = 0
     while iter_counter < N:
-        first_x = np.array([random.randrange(V_x[0], V_x[1], 1), random.randrange(V_y[0], V_y[1], 1)])
-        second_x = np.array([random.randrange(V_x[0], V_x[1], 1), random.randrange(V_y[0], V_y[1], 1)])
+        first_x = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
+        second_x = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
 
         if function(first_x) < function(second_x) and function(first_x) < global_min:
             min_x = first_x
-            global_min = function(first_x)
+            global_min = function(min_x)
         elif function(first_x) > function(second_x) and function(second_x) < global_min:
             min_x = second_x
-            global_min = function(second_x)
+            global_min = function(min_x)
         iter_counter += 1
-    return global_min, min_x
+    return min_x, N
 
 
-def StohatisticGradientMethod(function, x0, fprime, eps, g, m, maxiter=10000):
+def StohatisticGradientMethod(function, eps, g, m, maxiter=10000):
     V_x = [-10, 10]
     V_y = V_x
 
     iter_counter: int = 0
-    xk = x0
-    current_gradient = fprime(x0)
+    alpha = 1
+    xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
 
     while iter_counter < maxiter:
         delta_f = calculate_vector_sum(function, xk, m, g, function(xk), V_x, V_y)
@@ -364,21 +362,21 @@ def StohatisticGradientMethod(function, x0, fprime, eps, g, m, maxiter=10000):
         q = lambda alpha: function(xk - alpha * delta_f)
         coeff = golden(q)
             #golden_ratio(q, -100, 100, eps)
-        xNext = xk - coeff * delta_f / ln.norm(delta_f)
+        xNext = xk + coeff * delta_f / ln.norm(delta_f)
 
+        if ln.norm(delta_f) < eps:
+            return xNext
 
         xk = xNext
         iter_counter += 1
 
-        if np.linalg.norm(delta_f) <= eps:
-            return xk
 
 
-
-def pair_method(function, x_0 ,eps, g, maxiter=100000):
+def pair_method(function,eps, g, maxiter=100000):
     V_x = [-10, 10]
     V_y = V_x
 
+    alpha = 10
     iter_counter: int = 0
     xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
 
@@ -389,21 +387,22 @@ def pair_method(function, x_0 ,eps, g, maxiter=100000):
         second_func = function(xk - g * first_x)
 
         if first_func < second_func:
-            xk = xk - first_x * first_func
+            xk = xk + alpha * first_x * first_func
         elif second_func < first_func:
-            xk = xk + first_x * first_func
+            xk = xk + alpha * first_x * second_func
 
         iter_counter += 1
 
     return xk
 
 
-def Alg1(function, eps, g, maxiter=4000):
+def Alg1(function, M, sd):
     V_x = [-10, 10]
     V_y = V_x
 
+    random.seed(sd)
     iter_counter: int = 0
-    M = 15000
+    func_counter = 0
     m = 0
     xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
     current_value = 0
@@ -411,38 +410,131 @@ def Alg1(function, eps, g, maxiter=4000):
     xmin = 0
 
     while m < M:
+        iter_counter += 1
         xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
-        iter_counter = 0
 
-        while iter_counter < maxiter:
-            x = calculate_x(xk, V_x, V_y)
-            iter_counter += 1
+        xNext = minimize(function, xk, method='Nelder-Mead').x
+        current_func = function(xNext)
+        func_counter += 1
+
+        if current_func < fmin:
+            fmin = current_func
+            xmin = xNext
+        m += 1
+
+    return xmin, fmin, func_counter
 
 
-            if function(xk + g * x) - function(xk - g * x) < eps:
-                xk = xk + g * x
-                current_value = function(xk)
-            elif function(xk - g * x) - function(xk + g * x) < eps:
-                xk = xk - g * x
-                current_value = function(xk)
-            elif current_value < fmin:
+def Alg2(function, M, sd):
+    V_x = [-10, 10]
+    V_y = V_x
+
+    random.seed(sd)
+    iter_counter: int = 0
+    func_counter = 0
+    m = 0
+    xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
+    xmin = minimize(function, xk, method='Nelder-Mead').x
+    fmin = function(xmin)
+
+    while True:
+        iter_counter += 1
+        m = 0
+        while m < M:
+            xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
+
+            current_func = function(xk)
+            func_counter += 1
+
+            if current_func < fmin:
+                fmin = current_func
                 xmin = xk
-                fmin = current_value
                 break
-            else:
-                m += 1
+            m += 1
+        if m == M:
+            return xmin, fmin, func_counter
+        else:
+            xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
+            xmin = minimize(function, xk, method='Nelder-Mead').x
+            fmin = function(xmin)
+            func_counter += 1
+
+
+def Alg3(function, M, sd):
+    V_x = [-10, 10]
+    V_y = V_x
+
+    random.seed(sd)
+    iter_counter: int = 0
+    func_counter = 0
+    m = 0
+    xk = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
+    xmin = minimize(function, xk, method='Nelder-Mead').x
+    fmin = function(xmin)
+    delta = 0.5
+
+    while True:
+        iter_counter += 1
+        m = 0
+        while m < M:
+            m += 1
+            gen_x = np.array([random.uniform(V_x[0], V_x[1]), random.uniform(V_y[0], V_y[1])])
+            point = [0, 0]
+            while True:
+                point[0] += delta * (gen_x[0] / math.sqrt(gen_x[0]**2 + gen_x[1]**2))
+                point[1] += delta * (gen_x[1] / math.sqrt(gen_x[0] ** 2 + gen_x[1] ** 2))
+
+                func_counter += 2
+                if function(point) < function(xmin) or (point[0] < V_x[0] or point[0] > V_x[1] or point[1] < V_y[0] or point[1] > V_y[1]):
+                    break
+
+            if point[0] >= V_x[0] and point[0] <= V_x[1] and  point[1] >= V_y[0] and point[1] <= V_y[1] :
                 break
+        if m == M:
+            return xmin, fmin, func_counter
+        else:
+            current_x = minimize(function, point, method='Nelder-Mead').x
 
-    return xmin
+            if function(current_x) < function(xmin):
+                xmin = current_x
+                func_counter += 1
+                fmin = function(xmin)
 
 
-
-#xk, counter, iter_counter = fast_gradient_method(func_for_simple, gradient, np.array([0, 0]), epsi=1e-5)
+#xk, counter, iter_counter = fast_gradient_method(func_for_simple, gradient, np.array([5, 5]), epsi=1e-5)
 #result, k, third_Pearson_iter = third_Pearson(func_for_simple, gradient, np.array([10, 10]), epsi=1e-3)
 #result1, k2, second_Pearson_iter = second_Pearson(func_for_simple, gradient, np.array([10, 10]), epsi=1e-5)
-xk, iter_counter = barrier_method(function, gradient, barrier_function, g, np.array([5, 5]), eps=1e-5)
+#xk, iter_counter = barrier_method(function, gradient, barrier_function, g, np.array([5, 5]), eps=1e-5)
 #xk1, iter_counter1 = penalty_method(function, gradient, penalty_function, g, np.array([1, 1]), eps=1e-5)
-#global_min, min_x = simple_search(func_for_simple, 0.95, 1e-1, float('inf'))
-#x_min = StohatisticGradientMethod(func_for_simple, np.array([2, 2]), gradient, 1e-3, 0.0001, 10)
+test_func = func_for_simple([-3, 7])
+P = [0.8, 0.9, 0.95, 0.99]
+eps = [1, 1e-1]
+"""
+df = pd.DataFrame()
+for i in range(len(eps)):
+    for j in range(len(P)):
+        min_x, N = simple_search(func_for_simple, P[j], eps[i])
+        current_iter = [{'Eps': eps[i], 'P': P[j], 'X': min_x, 'N': N}]
+        df = df.append(current_iter, ignore_index=True)
+df.to_excel("simple_search.xlsx")
+"""
+df = pd.DataFrame()
+m = [100, 500, 1000, 5000, 10000]
+sd = [0, 100, -100, -456321, 1234568]
+for i in range(len(sd)):
+    min_x1, fmin1, func_counter1 = Alg1(func_for_simple, 1000, sd[i])
+    min_x2, fmin2, func_counter2 = Alg2(func_for_simple, 1000, sd[i])
+    min_x3, fmin3, func_counter3= Alg3(func_for_simple, 1000, sd[i])
+    current_iter = [{'sd': sd[i], 'Alg1 X': min_x1, 'Alg2 X': min_x2, 'Alg3 X': min_x3, 'Function Alg1': fmin1,
+                     'Function Alg2': fmin2, 'Function Alg3': fmin3, 'Alg1 Count': func_counter1, 'Alg2 Count': func_counter2,
+                     'Alg3 Count': func_counter3}]
+    df = df.append(current_iter, ignore_index=True)
+df.to_excel("alg.xlsx")
+
+
+
+#global_min, min_x = simple_search(func_for_simple, 0.95, 1e-1)
+#global_min, min_x = pair_method(func_for_simple, 1e-1, 0.001)
+x_min, f_min = Alg3(func_for_simple, 1e-3)
 #result = Alg1(func_for_simple, 1, 0.1)
-print(x_min)
+print(min_x)
