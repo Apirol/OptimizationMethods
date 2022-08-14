@@ -55,19 +55,8 @@ def fast_gradient_method(f, fprime, x0, maxiter=10000, epsi=1e-6):
 
 
 def function(X):
-    #return x[0]**2 + x[1]**2
     x, y = X
-    #return x**2 + y**2
-    #return -x**2 - y**2
     return 5 * (x + y)**2 + (x - 2)**2
-    #return 7*(x - y)**2 + (y - 6)**2
-    #return (x - 4)**2 + (y - 4)**2
-    #return 10 * (y - x)**2 + y**2
-    #return x**2 - x*y + y**2 + 9*x - 6*y + 20
-    #return 10 * x**2 + y**2
-    #return x**2 + y**2 - 1.2 * x * y
-    #return (1 - x) ** 2 + 100 * (y - x**2) ** 2
-    #return -3 / (1 + (x[0] - 2)**2 + (x[1] - 2)**2 / 4) - 2 / (1 + (x[0] - 2)**2 / 9 + (x[1] - 3)**2)
 
 
 def func_for_simple(X):
@@ -136,7 +125,6 @@ def penalty_method(f, gradient, penalty_function, g, x_0, eps=1e-5, maxiter=1000
 
     while iter_counter < maxiter:
         current_f = lambda x: f(x) + max(0, rg * penalty_function(g(x))**2 * w) + max(0, rh * h(x)**4 * w)
-        #current_f = lambda x, r: f(x) + h(x)
         xNext = minimize(current_f, xk).x
 
         xk = xNext
@@ -501,11 +489,6 @@ def Alg3(function, M, sd):
                 fmin = function(xmin)
 
 
-#xk, counter, iter_counter = fast_gradient_method(func_for_simple, gradient, np.array([5, 5]), epsi=1e-5)
-#result, k, third_Pearson_iter = third_Pearson(func_for_simple, gradient, np.array([10, 10]), epsi=1e-3)
-#result1, k2, second_Pearson_iter = second_Pearson(func_for_simple, gradient, np.array([10, 10]), epsi=1e-5)
-#xk, iter_counter = barrier_method(function, gradient, barrier_function, g, np.array([5, 5]), eps=1e-5)
-#xk1, iter_counter1 = penalty_method(function, gradient, penalty_function, g, np.array([1, 1]), eps=1e-5)
 test_func = func_for_simple([-3, 7])
 P = [0.8, 0.9, 0.95, 0.99]
 eps = [1, 1e-1]
@@ -533,8 +516,8 @@ df.to_excel("alg.xlsx")
 
 
 
-#global_min, min_x = simple_search(func_for_simple, 0.95, 1e-1)
-#global_min, min_x = pair_method(func_for_simple, 1e-1, 0.001)
+global_min, min_x = simple_search(func_for_simple, 0.95, 1e-1)
+global_min, min_x = pair_method(func_for_simple, 1e-1, 0.001)
 x_min, f_min = Alg3(func_for_simple, 1e-3)
-#result = Alg1(func_for_simple, 1, 0.1)
+result = Alg1(func_for_simple, 1, 0.1)
 print(min_x)
